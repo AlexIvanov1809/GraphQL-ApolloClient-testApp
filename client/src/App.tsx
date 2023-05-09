@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { CreateUser, IUser } from './types/userTypes';
 import { useQuery, useMutation } from '@apollo/client';
 import { GET_ALL_USERS, GET_ONE_USER } from './query/user';
-import { CREATE_USER } from './mutations/user';
+import { CREATE_USER, UPDATE_USER } from './mutations/user';
+import User from './components/User';
 
 const DEFAULT_USER = {
+  id: '',
   username: '',
   age: '',
 };
@@ -14,6 +16,8 @@ function App() {
   const [users, setUsers] = useState<IUser[]>([]);
   const [createUser, setCreateUser] = useState<CreateUser>(DEFAULT_USER);
   const [newUser] = useMutation(CREATE_USER);
+  const [updatedUser] = useMutation(UPDATE_USER);
+
   useEffect(() => {
     if (!loading && data) {
       setUsers(data.getAllUsers);
@@ -21,12 +25,14 @@ function App() {
   }, [data]);
 
   const handleChange = ({ target }: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(target.name);
     setCreateUser((prev) => ({ ...prev, [target.name]: target.value }));
   };
 
   const addUser = async (e: React.MouseEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!createUser.age || !createUser.username) {
+      return;
+    }
     try {
       const user = await newUser({
         variables: {
@@ -40,6 +46,34 @@ function App() {
     } catch (error: unknown) {
       console.log(error);
     }
+  };
+
+  const updateUser = async () => {
+    if (!createUser.age || !createUser.username) {
+      return;
+    }
+    try {
+      await updatedUser({
+        variables: {
+          id: createUser.id,
+          username: createUser.username,
+          age: parseInt(createUser.age, 10),
+        },
+      });
+
+      setCreateUser(DEFAULT_USER);
+      refetch();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const addUserDataToInput = (user: IUser) => {
+    setCreateUser({
+      id: user.id,
+      username: user.username,
+      age: user.age.toString(),
+    });
   };
 
   const getAllUsers = () => {
@@ -67,6 +101,9 @@ function App() {
         />
         <div className="btns">
           <button type="submit">Create user</button>
+          <button type="button" onClick={updateUser}>
+            Update user
+          </button>
           <button onClick={getAllUsers} type="button">
             Get users
           </button>
@@ -74,9 +111,12 @@ function App() {
       </form>
       <div>
         {users.map((user) => (
-          <div key={user.id} className="user">
-            {user.username} {user.age}
-          </div>
+          <User
+            key={user.id}
+            user={user}
+            onClick={addUserDataToInput}
+            refresh={refetch}
+          />
         ))}
       </div>
     </div>

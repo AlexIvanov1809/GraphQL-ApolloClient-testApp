@@ -11,6 +11,7 @@ interface IPost {
 }
 
 type CreateUser = {
+  id: string;
   username: string;
   age: string;
 };

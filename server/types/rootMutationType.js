@@ -3,9 +3,11 @@ const {
   GraphQLNonNull,
   GraphQLString,
   GraphQLInt,
+  GraphQLID,
 } = require('graphql');
 const { PostType, UserType } = require('./types');
 const { posts, users } = require('../db/db');
+const { uid } = require('uid');
 
 const RootMutationType = new GraphQLObjectType({
   name: 'Mutation',
@@ -20,7 +22,7 @@ const RootMutationType = new GraphQLObjectType({
       },
       resolve: (parent, args) => {
         const post = {
-          id: Date.now(),
+          id: uid(),
           title: args.title,
           userId: args.userId,
         };
@@ -33,6 +35,7 @@ const RootMutationType = new GraphQLObjectType({
       type: PostType,
       description: 'Update a post',
       args: {
+        id: { type: new GraphQLNonNull(GraphQLID) },
         title: { type: new GraphQLNonNull(GraphQLString) },
         userId: { type: new GraphQLNonNull(GraphQLInt) },
       },
@@ -54,7 +57,7 @@ const RootMutationType = new GraphQLObjectType({
       },
       resolve: (parent, args) => {
         const user = {
-          id: Date.now(),
+          id: uid(),
           username: args.username,
           age: args.age,
         };
@@ -67,6 +70,7 @@ const RootMutationType = new GraphQLObjectType({
       type: UserType,
       description: 'Update a user',
       args: {
+        id: { type: new GraphQLNonNull(GraphQLID) },
         username: { type: new GraphQLNonNull(GraphQLString) },
         age: { type: new GraphQLNonNull(GraphQLInt) },
       },
@@ -77,6 +81,20 @@ const RootMutationType = new GraphQLObjectType({
             users[index].age = args.age;
           }
         });
+      },
+    },
+
+    removeUser: {
+      type: UserType,
+      description: 'Remove a user',
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLID) },
+      },
+      resolve: (parent, args) => {
+        const index = users.findIndex((user) => user.id === args.id);
+        if (index !== -1) {
+          users.splice(index, 1);
+        }
       },
     },
   }),
