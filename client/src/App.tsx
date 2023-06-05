@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CreateUser, IUser } from './types/userTypes';
 import { useQuery, useMutation } from '@apollo/client';
-import { GET_ALL_USERS, GET_ONE_USER } from './query/user';
+import { GET_ALL_USERS } from './query/user';
 import { CREATE_USER, UPDATE_USER } from './mutations/user';
 import User from './components/User';
 
@@ -12,7 +12,7 @@ const DEFAULT_USER = {
 };
 
 function App() {
-  const { data, loading, error, refetch } = useQuery(GET_ALL_USERS);
+  const { data, loading, refetch } = useQuery(GET_ALL_USERS);
   const [users, setUsers] = useState<IUser[]>([]);
   const [createUser, setCreateUser] = useState<CreateUser>(DEFAULT_USER);
   const [newUser] = useMutation(CREATE_USER);
@@ -22,7 +22,7 @@ function App() {
     if (!loading && data) {
       setUsers(data.getAllUsers);
     }
-  }, [data]);
+  }, [data, loading]);
 
   const handleChange = ({ target }: React.ChangeEvent<HTMLInputElement>) => {
     setCreateUser((prev) => ({ ...prev, [target.name]: target.value }));
@@ -34,7 +34,7 @@ function App() {
       return;
     }
     try {
-      const user = await newUser({
+      await newUser({
         variables: {
           username: createUser.username,
           age: parseInt(createUser.age, 10),
@@ -92,12 +92,14 @@ function App() {
           name="username"
           value={createUser.username}
           type="text"
+          placeholder="Введите имя пользователя"
         />
         <input
           onChange={handleChange}
           name="age"
           value={createUser.age}
           type="number"
+          placeholder="Введите возраст пользователя"
         />
         <div className="btns">
           <button type="submit">Create user</button>
